@@ -1,0 +1,40 @@
+services:
+  yugabytedb:
+    container_name: kc_yugabytedb
+    image: yugabytedb/yugabyte:latest
+    volumes:
+      - yugabytedb_data:/home/yugabyte/yb_data
+    ports:
+      - "5433:5433"
+      - "7000:7000"
+      - "9009:9000"
+      - "9042:9042"
+    environment:
+      YSQL_DB: keycloak
+      YSQL_USER: keycloak
+      YSQL_PASSWORD: password
+    command: bin/yugabyted start --base_dir=/home/yugabyte/yb_data --daemon=false
+
+  keycloak:
+    container_name: kc_keycloak
+    image: quay.io/keycloak/keycloak:latest
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: yugabytedb
+      KC_DB_URL_PORT: 5433
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: password
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: password
+    ports:
+      - "8080:8080"
+    command: start-dev
+    depends_on:
+      yugabytedb:
+       condition: service_started
+      
+
+volumes:
+  yugabytedb_data:
+    driver: local
